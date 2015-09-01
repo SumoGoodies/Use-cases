@@ -1,0 +1,27 @@
+For Active directory, something like this:  (assumes you used the Microsoft FERs under the FER section)
+
+ _sourceCategory=Active_Directory classification=Login/Success !(src_user="ANONYMOUS LOGON" or src_ip="-" or src_ip="::1" or src_ip=127.0.0.1 or src_ip=*:*)
+| join (parse "instance of Win32*\r" as connection ) as t1, (parse "instance of Win32*\r" as connection) as t2 on t1.src_user = t2.src_user timewindow 30m
+| where t1__messagetime != t2__messagetime and t2__messagetime > t1__messagetime and t1_src_ip != t2_src_ip
+| count t1_src_user, t2_src_user, t1_src_ip, t2_src_ip, t1_src_host, t2_src_host
+| where _count > 50  // change this if you want to
+| sort _count
+
+-----------------
+For VPN
+
+_sourceCategory=*vpn* !denied 
+| parse "Vpn-dmz:*/* to inside:*(*)" as ip,_b, inside,user 
+| join (parse "connection * for" as connection ) as t1, (parse "connection * for" as connection) as t2 on t1.user = t2.user timewindow 30m
+| lookup latitude, longitude, country_code, country_name, region, city, postal_code, area_code, metro_code from geo://default on t1_ip = ip
+| lookup latitude as lat2, longitude as long2, country_code as country_code2, country_name as country_name2, region as region2, city as city2, postal_code as postal_code2, area_code as area_code2, metro_code as metro_code2 from geo://default on t2_ip = ip 
+| if  (isNull(country_code), "unknown", country_code) as country_code
+| if  (isNull(country_code2), "unknown", country_code2) as country_code2
+//| where t1__messagetime != t2__messagetime | where t1__messagetime < t2__messagetime
+| where !(country_code matches "unknown") AND !(country_code2 matches "unknown") AND country_code != country_code2
+//| formatDate(fromMillis(t1__messagetime), "MM-dd HH:mm:ss") as myDate1
+//| formatDate(fromMillis(t2__messagetime), "MM-dd HH:mm:ss") as myDate2
+//| fields t1_ip,t2_ip,t1_user,t2_user,country_code,country_code2,myDate1,myDate2
+
+
+
