@@ -1,0 +1,5 @@
+For Active Directory, something like these.. again consult the FER section for the field naming
+
+_sourceCategory=Active_Directory classification=*account* | count classification,src_user, src_host, dest_user
+
+
