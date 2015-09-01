@@ -1,0 +1,2 @@
+_sourceCategory=Active_Directory "Administrator" !("kerberos" and "ticket")
+| parse "Message = \"*." as msg
