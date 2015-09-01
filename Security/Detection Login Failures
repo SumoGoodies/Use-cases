@@ -1,0 +1,19 @@
+For Active Directory based, with outlier detection on a per user behavior basis
+
+classification=Login/Failure _sourceCategory=Active_Directory
+|timeslice 5m
+|count _timeslice, src_user 
+| sort _timeslice
+| outlier _count by src_user window=3,threshold=3,consecutive=1,direction=+-
+| where !(_count_violation=0)
+
+
+----
+at the collective level -- could indicating issues within the env rather than users
+
+classification=Login/Failure
+|timeslice 5m
+|count _timeslice 
+| sort _timeslice
+| outlier _count window=10,threshold=3,consecutive=2,direction=+-
+| where !(_count_violation=0)
